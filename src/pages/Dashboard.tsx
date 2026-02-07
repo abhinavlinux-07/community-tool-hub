@@ -24,8 +24,11 @@ interface Loan {
   status: string;
   due_date: string | null;
   requested_at: string;
+  returned_at: string | null;
   tool_id: string | null;
   hardware_sample_id: string | null;
+  tools: { name: string } | null;
+  hardware_samples: { name: string } | null;
 }
 
 interface ImpactMetrics {
@@ -60,7 +63,7 @@ export default function Dashboard() {
     const [loansResult, metricsResult] = await Promise.all([
       supabase
         .from('loans')
-        .select('*')
+        .select('*, tools(name), hardware_samples(name)')
         .eq('user_id', user!.id)
         .order('requested_at', { ascending: false }),
       supabase
@@ -228,13 +231,14 @@ export default function Dashboard() {
                           )}
                         </div>
                         <div>
-                          <p className="font-medium text-foreground capitalize">
-                            {loan.tool_id ? 'Tool Loan' : 'Hardware Trial'}
+                        <p className="font-medium text-foreground">
+                            {loan.tools?.name || loan.hardware_samples?.name || (loan.tool_id ? 'Tool Loan' : 'Hardware Trial')}
                           </p>
                           <p className="text-sm text-muted-foreground">
                             {loan.due_date 
                               ? `Due: ${new Date(loan.due_date).toLocaleDateString()}`
                               : 'No due date'}
+                            {loan.returned_at && ` · Returned: ${new Date(loan.returned_at).toLocaleDateString()}`}
                           </p>
                         </div>
                       </div>

@@ -18,8 +18,12 @@ interface Loan {
   status: string;
   due_date: string | null;
   requested_at: string;
+  returned_at: string | null;
   purpose: string | null;
+  tool_id: string | null;
   hardware_sample_id: string | null;
+  tools: { name: string } | null;
+  hardware_samples: { name: string } | null;
 }
 
 export default function B2BDashboard() {
@@ -44,7 +48,7 @@ export default function B2BDashboard() {
     setDataLoading(true);
     const { data } = await supabase
       .from('loans')
-      .select('*')
+      .select('*, tools(name), hardware_samples(name)')
       .eq('user_id', user!.id)
       .order('requested_at', { ascending: false });
 
@@ -148,10 +152,13 @@ export default function B2BDashboard() {
                       </div>
                       <div>
                         <p className="font-medium text-foreground">
-                          {trial.purpose || 'Hardware Trial'}
+                          {trial.tools?.name || trial.hardware_samples?.name || trial.purpose || 'Hardware Trial'}
                         </p>
                         <p className="text-sm text-muted-foreground">
+                          {trial.purpose && <span className="mr-2">({trial.purpose})</span>}
                           Requested {new Date(trial.requested_at).toLocaleDateString()}
+                          {trial.due_date && ` · Due: ${new Date(trial.due_date).toLocaleDateString()}`}
+                          {trial.returned_at && ` · Returned: ${new Date(trial.returned_at).toLocaleDateString()}`}
                         </p>
                       </div>
                     </div>

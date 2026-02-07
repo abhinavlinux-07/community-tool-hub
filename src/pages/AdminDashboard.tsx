@@ -12,7 +12,8 @@ import {
   ClipboardList,
   AlertTriangle,
   CheckCircle2,
-  Clock
+  Clock,
+  IndianRupee
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -21,6 +22,28 @@ interface DashboardStats {
   activeLoans: number;
   pendingLoans: number;
   overdueLoans: number;
+}
+
+interface LoanRecord {
+  id: string;
+  status: string;
+  requested_at: string;
+  due_date: string | null;
+  returned_at: string | null;
+  purpose: string | null;
+  fine_amount: number | null;
+  user_id: string;
+  tool_id: string | null;
+  hardware_sample_id: string | null;
+  tools: { name: string } | null;
+  hardware_samples: { name: string } | null;
+  userName?: string;
+}
+
+interface UserProfile {
+  id: string;
+  full_name: string | null;
+  email: string;
 }
 
 export default function AdminDashboard() {
@@ -33,6 +56,7 @@ export default function AdminDashboard() {
     pendingLoans: 0,
     overdueLoans: 0,
   });
+  const [loans, setLoans] = useState<LoanRecord[]>([]);
   const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
@@ -49,19 +73,30 @@ export default function AdminDashboard() {
 
   const fetchStats = async () => {
     setDataLoading(true);
-    const [toolsRes, hardwareRes, loansRes] = await Promise.all([
+    const [toolsRes, hardwareRes, loansRes, profilesRes] = await Promise.all([
       supabase.from('tools').select('id', { count: 'exact', head: true }),
       supabase.from('hardware_samples').select('id', { count: 'exact', head: true }),
-      supabase.from('loans').select('status'),
+      supabase
+        .from('loans')
+        .select('*, tools(name), hardware_samples(name)')
+        .order('requested_at', { ascending: false }),
+      supabase.from('profiles').select('id, full_name, email'),
     ]);
 
-    const loans = loansRes.data || [];
+    const profiles = (profilesRes.data || []) as UserProfile[];
+    const profileMap = new Map(profiles.map(p => [p.id, p]));
+
+    const allLoans = ((loansRes.data || []) as unknown as LoanRecord[]).map(loan => ({
+      ...loan,
+      userName: profileMap.get(loan.user_id)?.full_name || profileMap.get(loan.user_id)?.email || 'Unknown',
+    }));
+    setLoans(allLoans);
     setStats({
       totalTools: toolsRes.count || 0,
       totalHardware: hardwareRes.count || 0,
-      activeLoans: loans.filter(l => l.status === 'active').length,
-      pendingLoans: loans.filter(l => l.status === 'pending').length,
-      overdueLoans: loans.filter(l => l.status === 'overdue').length,
+      activeLoans: allLoans.filter(l => l.status === 'active').length,
+      pendingLoans: allLoans.filter(l => l.status === 'pending').length,
+      overdueLoans: allLoans.filter(l => l.status === 'overdue').length,
     });
     setDataLoading(false);
   };
@@ -88,6 +123,18 @@ export default function AdminDashboard() {
     warning: 'bg-warning/10 text-warning',
     info: 'bg-info/10 text-info',
     destructive: 'bg-destructive/10 text-destructive',
+  };
+
+  const statusColor = (status: string) => {
+    switch (status) {
+      case 'active': return 'bg-success/10 text-success';
+      case 'pending': return 'bg-warning/10 text-warning';
+      case 'approved': return 'bg-info/10 text-info';
+      case 'returned': return 'bg-muted text-muted-foreground';
+      case 'overdue': return 'bg-destructive/10 text-destructive';
+      case 'rejected': return 'bg-destructive/10 text-destructive';
+      default: return 'bg-muted text-muted-foreground';
+    }
   };
 
   return (
@@ -126,11 +173,12 @@ export default function AdminDashboard() {
             ))}
           </motion.div>
 
+          {/* Quick Actions */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-card rounded-2xl border border-border p-6"
+            className="bg-card rounded-2xl border border-border p-6 mb-8"
           >
             <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
               <ClipboardList className="w-5 h-5" /> Quick Actions
@@ -151,6 +199,76 @@ export default function AdminDashboard() {
                 </div>
               ))}
             </div>
+          </motion.div>
+
+          {/* All Loans History */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="bg-card rounded-2xl border border-border p-6"
+          >
+            <h2 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+              <ClipboardList className="w-5 h-5" /> All Loan History
+            </h2>
+
+            {dataLoading ? (
+              <div className="space-y-3">
+                {[1, 2, 3, 4].map(i => (
+                  <div key={i} className="h-16 bg-muted rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : loans.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">No loan records yet</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">User</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Item</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Purpose</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Status</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Requested</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Due Date</th>
+                      <th className="text-left py-3 px-4 text-muted-foreground font-medium">Fine</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loans.map((loan) => (
+                      <tr key={loan.id} className="border-b border-border/50 hover:bg-muted/30">
+                        <td className="py-3 px-4 text-foreground">
+                          {loan.userName || 'Unknown'}
+                        </td>
+                        <td className="py-3 px-4 text-foreground">
+                          {loan.tools?.name || loan.hardware_samples?.name || 'N/A'}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {loan.purpose || '—'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`text-xs px-2 py-1 rounded-full capitalize ${statusColor(loan.status)}`}>
+                            {loan.status}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {new Date(loan.requested_at).toLocaleDateString()}
+                        </td>
+                        <td className="py-3 px-4 text-muted-foreground">
+                          {loan.due_date ? new Date(loan.due_date).toLocaleDateString() : '—'}
+                        </td>
+                        <td className="py-3 px-4 text-foreground">
+                          {loan.fine_amount ? `₹${loan.fine_amount}` : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </motion.div>
         </div>
       </main>

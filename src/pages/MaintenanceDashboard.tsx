@@ -21,6 +21,8 @@ interface MaintenanceRecord {
   notes: string | null;
   created_at: string;
   next_service_date: string | null;
+  repair_cost: number | null;
+  tools: { name: string } | null;
 }
 
 export default function MaintenanceDashboard() {
@@ -47,7 +49,7 @@ export default function MaintenanceDashboard() {
     const [recordsRes, repairRes] = await Promise.all([
       supabase
         .from('maintenance_records')
-        .select('*')
+        .select('*, tools(name)')
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
@@ -160,12 +162,14 @@ export default function MaintenanceDashboard() {
                       <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                         {conditionIcon(record.new_condition)}
                       </div>
-                      <div>
-                        <p className="font-medium text-foreground capitalize">
-                          {record.new_condition.replace('_', ' ')}
+                       <div>
+                        <p className="font-medium text-foreground">
+                          {record.tools?.name || 'Unknown Tool'} — <span className="capitalize">{record.new_condition.replace('_', ' ')}</span>
                         </p>
                         <p className="text-sm text-muted-foreground">
                           {record.notes || 'No notes'}
+                          {record.repair_cost ? ` · Cost: ₹${record.repair_cost}` : ''}
+                          {record.next_service_date ? ` · Next service: ${new Date(record.next_service_date).toLocaleDateString()}` : ''}
                         </p>
                       </div>
                     </div>
