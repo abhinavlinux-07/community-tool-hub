@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Leaf, DollarSign, Users } from 'lucide-react';
+import { ArrowRight, Leaf, Users } from 'lucide-react';
 
 export function CTASection() {
   return (
@@ -21,9 +21,9 @@ export function CTASection() {
           >
             <div className="flex flex-col items-center">
               <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center mb-3">
-                <DollarSign className="w-6 h-6 text-white" />
+                <span className="text-white font-bold text-lg">₹</span>
               </div>
-              <div className="text-2xl md:text-3xl font-bold text-white">$45K+</div>
+              <div className="text-2xl md:text-3xl font-bold text-white">₹37L+</div>
               <div className="text-sm text-white/70">Saved by Community</div>
             </div>
             <div className="flex flex-col items-center">
