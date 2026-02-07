@@ -205,7 +205,7 @@ export default function Auth() {
               <div className="text-white/60 text-sm">CO₂ Saved</div>
             </div>
             <div>
-              <div className="text-3xl font-bold">$45K+</div>
+              <div className="text-3xl font-bold">₹37L+</div>
               <div className="text-white/60 text-sm">Money Saved</div>
             </div>
           </div>

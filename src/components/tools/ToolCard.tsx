@@ -9,7 +9,6 @@ import {
   Check, 
   X, 
   Leaf, 
-  DollarSign,
   Wrench,
   Cpu,
   Ruler,
@@ -163,8 +162,8 @@ export function ToolCard({ tool }: { tool: Tool }) {
         <div className="flex items-center gap-4 text-sm">
           {tool.daily_rate !== null && tool.daily_rate > 0 && (
             <div className="flex items-center gap-1 text-muted-foreground">
-              <DollarSign className="w-4 h-4" />
-              <span>${tool.daily_rate}/day</span>
+              <span className="font-medium">₹</span>
+              <span>₹{tool.daily_rate}/day</span>
             </div>
           )}
           {tool.co2_per_use !== null && tool.co2_per_use > 0 && (

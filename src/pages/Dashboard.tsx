@@ -10,7 +10,7 @@ import {
   Clock, 
   AlertCircle, 
   Leaf, 
-  DollarSign,
+  IndianRupee,
   TrendingUp,
   Package,
   Calendar,
@@ -138,8 +138,8 @@ export default function Dashboard() {
             />
             <StatsCard
               title="Money Saved"
-              value={`$${metrics?.money_saved?.toFixed(0) || 0}`}
-              icon={DollarSign}
+              value={`₹${metrics?.money_saved?.toFixed(0) || 0}`}
+              icon={IndianRupee}
               color="success"
             />
             <StatsCard
