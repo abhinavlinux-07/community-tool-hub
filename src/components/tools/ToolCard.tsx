@@ -5,15 +5,15 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/lib/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { 
-  Check, 
-  X, 
-  Leaf, 
+import {
+  Check,
+  X,
+  Leaf,
   Wrench,
   Cpu,
   Ruler,
   HardHat,
-  Calendar
+  Calendar,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
